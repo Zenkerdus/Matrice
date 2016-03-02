@@ -1,0 +1,284 @@
+<html>
+<head>
+<link rel="icon" type="favicon.png" href="/img/c2.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta charset="UTF-8">
+<title>Matrice</title>
+<style>
+#canvasRiddle{
+	border-style: solid;
+	position: relative;
+}
+
+#answerbox{
+	margin-top: 20px;
+	margin-left: 13px;
+	width: auto;
+	height: 270px;
+}
+
+#btnNewProblem{
+	height: 10em;
+	width: 20em;
+	margin-left: 60px;
+	margin-top: 20px;
+}
+
+
+
+#wrapper{
+	width: 700px;
+	margin-top: 20px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.test{
+	width:130px;
+	float:left;
+	cursor: pointer;
+}
+
+.btnModes{
+	height: 45px;
+	margin-left: 60px;
+}
+
+
+</style>
+</head>
+<body>
+<div id="wrapper">
+	<canvas id="canvasRiddle" width=400 height=400></canvas>
+		<div id="answerbox">
+		<!--<img src = "img/done.svg">-->
+	</div>
+		<p id="debugText">Mode</p>
+		<button id="btnNewProblem" onClick="newProblem()">Nytt problem</button><br>
+		<button id="btnMode0" class="btnModes" onClick="changeMode(0)">Mode 0</button>
+		<button id="btnMode1" class="btnModes" onClick="changeMode(1)">Mode 1</button><br>
+	<br><img src="RPM.jpg"></img>
+
+</div>
+
+
+<script>
+var circle = [
+	new Image(), new Image(), new Image(), new Image()
+]
+var circleGreen = [
+	new Image(), new Image(), new Image()
+]
+
+var NUMOFDIFFBOXES = 3; //Number of different boxes that can be shown
+
+circle[0].src = "img/c1.png";
+circle[1].src = "img/c2.png";
+circle[2].src = "img/c3.png";
+circle[3].src = "img/q.png";
+
+circleGreen[0].src = "img/cg1.png";
+circleGreen[1].src = "img/cg2.png";
+circleGreen[2].src = "img/cg3.png";
+
+
+var c = document.getElementById("canvasRiddle");
+var ctx = c.getContext("2d");
+var answer = 0;
+var answerRow = 0;
+var patternMode = 0;
+
+//-------------------------------//
+//-------    MAIN   -------------//
+//-------------------------------//
+function pattern(mode){
+// Creates a matrix pattern
+	var p = [];
+	var pRow = []; // temp pattern
+	var ROW = 3;
+	
+	//Prepare small row pattern Todo: Should be moved?
+	for(var i=0;i<ROW;i++){
+		pRow[i] = Math.floor(Math.random()*ROW);
+		console.log("pRow[]",pRow)
+	}
+	
+	if (mode == 0){
+	/////////////////////////
+	//  VERY easy pattern  //
+	/////////////////////////
+		for(var i=0;i<ROW;i++){	
+			//TODO: Also, move into something called "Matrix" function or something
+			p[i] = pRow[i];
+			p[i+ROW] = pRow[i];
+			p[i+(ROW*2)] = pRow[i];
+		}
+	}
+	else if (mode == 1){
+	/////////////////////////
+	// Total randomness?   //
+	/////////////////////////
+		for(var i=0;i<ROW;i++){	
+			p[i] = Math.floor(Math.random()*ROW);
+			p[i+ROW] = Math.floor(Math.random()*ROW);
+			p[i+(ROW*2)] = Math.floor(Math.random()*ROW);
+		}
+	}
+	else if (mode == 2){
+		//BROKEN
+		//debugger;
+		var D = NUMOFDIFFBOXES-1;
+		for (var i=0;i<ROW;i++){
+			var t = pRow.shift();
+			pRow.push(t);
+			//Checks with temp pattern before assigning
+			if(!(pRow[i] + 1 > D)){
+				p[i] = pRow[i]+1;
+				p[i+ROW] = pRow[i]+1;
+				p[i+(ROW*2)] = pRow[i]+1;
+				continue;
+			}
+			if(!(pRow[i] - 1 < 0 )){
+				p[i] = pRow[i]-1;
+				p[i+ROW] = pRow[i]-1;
+				p[i+(ROW*2)] = pRow[i]-1;
+				continue;
+			}
+			if(!(pRow[i]+1>D)){
+				p[i] = pRow[i]+1;
+				p[i+ROW] = pRow[i]+1;
+				p[i+(ROW*2)] = pRow[i]+1;
+				continue;
+			}
+		console.error("error: a value in matrix didn't get assigned!");
+		}
+	}
+		
+	return p;
+}
+
+function createAnswerRow(number){
+	// "Draws" the answerBox
+	var d = document.getElementById("answerbox");
+	var htmltext = [];
+	var row = makeAnswerRow(number);
+	answerRow = row;
+	console.log(answerRow);
+	//var 
+	var l = row.length;
+	for( var x = 0; x < l; x++ ){
+		// Creates div
+		var n = document.createElement("div");
+		n.id = "ans"+x;
+		n.addEventListener("click",ansClicked.bind(event));
+		n.className = "test";
+
+		// Creates img
+		var img = circle[row[x]];
+		n.appendChild(img);
+		d.appendChild(n);
+	}
+	//d.innerHTML = htmltext;
+}
+
+function makeAnswerRow(number){
+	var array = [];
+	for (var x = 0; x < number; x++){
+		array.push(x);
+	}
+	array = shuffleArray(array);
+	return array;
+}
+
+
+function shuffleArray(array){
+	var m = array.length, t, i;
+	while (m) {
+		i = Math.floor(Math.random() * m--);
+		t = array[m];
+		array[m] = array[i];
+		array[i] = t;
+	}
+	return array;
+}
+
+
+
+function drawMatrice(argmatrice){
+	var m = argmatrice;
+	for(var i=0;i<3;i++){
+		//imageLoad(circle[m[i]],20,20);
+
+		ctx.drawImage(circle[m[i]],20+ (118*i),20);
+		ctx.drawImage(circle[m[i+3]],20+ (118*i),135);
+		if(i==2)
+			ctx.drawImage(circle[3],20 + (118*i), 250);
+		else{ctx.drawImage(circle[m[i+6]],20 + (118*i),250);}
+	}
+		
+}
+
+function draw(){
+	ctx.rect(0,0,400,400);
+	ctx.fill();
+	var p = pattern(patternMode);//(patternMode=[anyvalue] for debug)-------------------------------------------
+	answer = p[p.length-1]; // Set answer
+	drawMatrice(p);
+	document.getElementById("debugText").innerText = "Pattern mode: "+patternMode;
+}
+
+function newProblem(){
+	draw();
+	createAnswerRow(3);
+	
+}
+
+function ansClicked(arganswer){
+	//console.log(this);
+	//console.log(arganswer);
+	//debugger;
+	var yourAnswer = event.target.parentNode.id;
+	console.log(yourAnswer);
+	
+	switch(yourAnswer){
+		case "ans0":
+			yourAnswer = answerRow[0];
+		break;
+		case "ans1":
+			yourAnswer = answerRow[1];
+		break;
+		case "ans2":
+			yourAnswer = answerRow[2];
+		break;
+		default:
+			alert("Error: ansClicked pointed at wrong value!");
+		break;
+	}
+	
+	
+	
+	if (answer == yourAnswer){
+		correctAnswer();
+		setTimeout(newProblem,1000);
+	}
+	else{console.log("that was false..");}
+}
+
+function correctAnswer(){
+	console.log("Correct answer!");
+	ctx.drawImage(circleGreen[answer],20 + (118*2), 250);
+	
+}
+
+function changeMode(mode){
+	patternMode = mode;
+	newProblem();
+}
+
+window.onload = function(){
+	newProblem();
+}
+
+</script>
+</body>
+</html>
